@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP=$(basename ${0##*/});
+APP=${0##*/};
 RUNTIME_DIR="$HOME/.prj"
 
 print_usage() {
@@ -11,19 +11,22 @@ print_usage() {
         echo
         echo -e "available commands:"
         echo -e "   list       lists all added projects"
-        exit
+    else
+        case $1 in
+            list)
+                echo -e "usage: $APP list [<options>]"
+            ;;
+            add)
+                echo -e "usage: $APP add [<options>]"
+                echo
+                echo -e "   -n, --name   name of the project, default: current dirname"
+            ;;
+            *)
+                echo -e "unknown command"
+                exit 1
+            ;;
+        esac
     fi
-
-    case $1 in
-        list)
-            echo -e "usage: $APP list [<options>]"
-        ;;
-        add)
-            echo -e "usage: $APP add [<options>]"
-            echo
-            echo -e "   -n, --name   name of the project, default: current dirname"
-        ;;
-    esac
 }
 
 init() {
@@ -74,8 +77,13 @@ while [ $# -gt 0 ]; do
             echo `pwd` > "$RUNTIME_DIR/$NAME"
         ;;
         help|--help|-h)
-            print_usage 
             shift
+            print_usage $@
+        ;;
+        *)
+            echo "unknown command $@"
+            print_usage
+            exit 1
         ;;
     esac
 done
