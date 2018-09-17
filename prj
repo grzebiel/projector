@@ -1,0 +1,81 @@
+#!/bin/bash
+
+APP=$(basename ${0##*/});
+RUNTIME_DIR="$HOME/.prj"
+
+print_usage() {
+    if [ $# -eq 0 ]
+    then
+        echo -e "usage: $APP [--version] [--help]"
+        echo -e "            <command> [<args>]"
+        echo
+        echo -e "available commands:"
+        echo -e "   list       lists all added projects"
+        exit
+    fi
+
+    case $1 in
+        list)
+            echo -e "usage: $APP list [<options>]"
+        ;;
+        add)
+            echo -e "usage: $APP add [<options>]"
+            echo
+            echo -e "   -n, --name   name of the project, default: current dirname"
+        ;;
+    esac
+}
+
+init() {
+    mkdir $RUNTIME_DIR
+}
+
+if [ -d $RUNTIME_DIR ];
+then
+    init
+fi
+
+if [ $# -eq 0 ]
+then
+    echo "No args given, nothing to do"
+    echo
+    print_usage
+    exit 1
+fi
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        list)
+            shift
+        ;;
+        add)
+            shift
+            $NAME="${PWD##*/}" #getting the name of top level directory
+            while [ $# -gt 0 ]
+            do
+                case $1 in
+                    -n|--name)
+                        shift
+                        if [ $# -lt 1 ]
+                        then
+                            echo "missing name parameter"
+                            print_usage add
+                            exit 1
+                        fi
+                        $NAME="$1"
+                    ;;
+                    *)
+                        echo "unknown parameters!"
+                        print_usage add
+                        exit 1
+                    ;;
+                esac
+            done
+            echo `pwd` > "$RUNTIME_DIR/$NAME"
+        ;;
+        help|--help|-h)
+            print_usage 
+            shift
+        ;;
+    esac
+done
