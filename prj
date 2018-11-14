@@ -33,7 +33,7 @@ print_usage() {
                 echo -e "   -n, --name   name of the project, default: current dirname"
             ;;
             *)
-                echo -e "unknown command"
+                echo -e "unknown command $1"
                 exit 1
             ;;
         esac
@@ -49,7 +49,7 @@ init_project() {
     PRJ_DB_DIR="$DB_DIR/$NAME"
     mkdir "$PRJ_DB_DIR"
     echo "$PRJ_DIR" > "$PRJ_DB_DIR/pwd"
-    echo inited $NAME as $PRJ_DIR
+    echo added project $NAME with pwd $PRJ_DIR
 }
 
 
@@ -153,13 +153,14 @@ while [ $# -gt 0 ]; do
                             print_usage add
                             exit 1
                         fi
-                        $NAME="$1"
+                        NAME="$1"
+                        shift
                     ;;
                     -v|--version)
                         shift
                     ;;
                     *)
-                        echo "unknown parameters!"
+                        echo "unknown parameters! $@"
                         print_usage add
                         exit 1
                     ;;

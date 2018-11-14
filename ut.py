@@ -32,3 +32,14 @@ def test_printing_help_does_not_fail():
     assert_succes(res)
     assert_usage_printeed(res)
 
+def test_init_project_list_and_enter_project():
+    project_directory = "test_project_directory"
+    res = run("mkdir -p " + project_directory)
+    assert_succes(res)
+    res = run("cd " + project_directory + " && bash ../prj --db_dir ../db init --name test_app")
+    assert_succes(res)
+    res_list = run("bash ./prj --db_dir db list")
+    assert(b"test_app" in res_list.stdout)
+    res = run("./prj --db_dir db cd test_app")
+    assert_succes(res)
+    run("rm -r " + project_directory + " " + "db")
