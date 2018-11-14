@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP=${0##*/};
-RUNTIME_DIR="$HOME/.prj"
+DB_DIR="$HOME/.prj"
 
 print_usage() {
     if [ $# -eq 0 ]
@@ -11,13 +11,18 @@ print_usage() {
         echo
         echo -e "available commands:"
         echo -e "   list       lists all added projects"
+        echo -e "   init       add the project into the projector"
+        echo
+        echo -e "available options:"
+        echo -e "   --version     prints the version number"
+        echo -e "   --db_dir   specifies the directory to treat as database"
     else
         case $1 in
             list)
                 echo -e "usage: $APP list [<options>]"
             ;;
-            add)
-                echo -e "usage: $APP add [<options>]"
+            init)
+                echo -e "usage: $APP init [<options>]"
                 echo
                 echo -e "   -n, --name   name of the project, default: current dirname"
             ;;
@@ -29,11 +34,32 @@ print_usage() {
     fi
 }
 
-init() {
-    mkdir $RUNTIME_DIR
+init_project() {
+    local NAME=$1
+    shift
+    local PRJ_DIR=$1
+    shift
+
+    PRJ_DB_DIR="$DB_DIR/$NAME"
+    mkdir "$PRJ_DB_DIR"
+    echo "$PRJ_DIR" > "$PRJ_DB_DIR/pwd"
+    echo inited $NAME as $PRJ_DIR
 }
 
-if [ -d $RUNTIME_DIR ];
+
+list_projects() {
+    ls $DB_DIR | while read DIR
+    do
+        local path=$(cat "$DB_DIR/$DIR/pwd")
+        echo -e $DIR,$path
+    done | column -s ',' -t
+}
+
+init() {
+    mkdir $DB_DIR
+}
+
+if [ -d $DB_DIR ];
 then
     init
 fi
@@ -46,14 +72,17 @@ then
     exit 1
 fi
 
+NAME="${PWD##*/}" #getting the name of top level directory
+
 while [ $# -gt 0 ]; do
     case $1 in
+
         list)
+            list_projects
             shift
         ;;
-        add)
+        init)
             shift
-            $NAME="${PWD##*/}" #getting the name of top level directory
             while [ $# -gt 0 ]
             do
                 case $1 in
@@ -67,6 +96,9 @@ while [ $# -gt 0 ]; do
                         fi
                         $NAME="$1"
                     ;;
+                    -v|--version)
+                        shift
+                    ;;
                     *)
                         echo "unknown parameters!"
                         print_usage add
@@ -74,11 +106,16 @@ while [ $# -gt 0 ]; do
                     ;;
                 esac
             done
-            echo `pwd` > "$RUNTIME_DIR/$NAME"
+            init_project "$NAME" "$PWD"
         ;;
         help|--help|-h)
             shift
             print_usage $@
+        ;;
+        --db_dir)
+            shift
+            DB_DIR=$1
+            shift
         ;;
         *)
             echo "unknown command $@"
