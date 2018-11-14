@@ -12,12 +12,18 @@ print_usage() {
         echo -e "available commands:"
         echo -e "   list       lists all added projects"
         echo -e "   init       add the project into the projector"
+        echo -e "   cd         open project"
         echo
         echo -e "available options:"
         echo -e "   --version     prints the version number"
         echo -e "   --db_dir   specifies the directory to treat as database"
     else
         case $1 in
+            cd)
+                echo -e "usage: $APP cd [project]"
+                echo
+                echo -e "   project      name of the project to oppen"
+            ;;
             list)
                 echo -e "usage: $APP list [<options>]"
             ;;
@@ -55,14 +61,46 @@ list_projects() {
     done | column -s ',' -t
 }
 
-init() {
-    mkdir $DB_DIR
+open_project() {
+    local name=$1
+    shift
+
+    PRJ_DB_DIR="$DB_DIR/$name"
+
+    if [ ! -d $PRJ_DB_DIR ]
+    then
+        echo no project $name
+        echo
+        print_usage
+        exit 2
+    fi
+    local pwd=$(cat "$PRJ_DB_DIR/pwd")
+    rcfile=$(realpath $DB_DIR/.bashrc)
+    cd $pwd
+    PROJECTOR_PWD="$pwd" PROJECTOR_NAME="$name" exec bash --rcfile "$rcfile"
 }
 
-if [ -d $DB_DIR ];
+init() {
+    if [ ! -d "$DB_DIR" ];
+    then
+        echo created db $DB_DIR
+        mkdir -p $DB_DIR
+    fi
+
+    if [ ! -f "$DB_DIR/.bashrc" ]
+    then
+        echo created .bashrc in $DB_DIR
+        cat > $DB_DIR/.bashrc << EOF
+if [ -f ~/.bashrc ]
 then
-    init
+    source ~/.bashrc
 fi
+
+PS1="{\$PROJECTOR_NAME}|\$PS1"
+echo you've entered project \$PROJECTOR_NAME env. use C-d to leave it.
+EOF
+    fi
+}
 
 if [ $# -eq 0 ]
 then
@@ -76,13 +114,34 @@ NAME="${PWD##*/}" #getting the name of top level directory
 
 while [ $# -gt 0 ]; do
     case $1 in
-
-        list)
-            list_projects
+        cd)
             shift
+            init
+            if [ ! -z ${PROJECTOR_NAME+x} ]
+            then
+                echo you are already in the projector environment. Leave it first using \<C-d\> or exit command
+                exit 1
+            fi
+            if [ ! $# -eq 1 ]
+            then
+                echo "No project given"
+                echo
+                print_usage cd
+                exit 1
+            fi
+            open_project $1
+            shift
+            exit
+        ;;
+        list)
+            shift
+            init
+            list_projects
+            exit
         ;;
         init)
             shift
+            init
             while [ $# -gt 0 ]
             do
                 case $1 in
