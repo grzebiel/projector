@@ -4,33 +4,33 @@ APP=${0##*/};
 DB_DIR="$HOME/.prj"
 
 print_usage() {
+    echo
     if [ $# -eq 0 ]
     then
-        echo -e "usage: $APP [--version] [--help]"
-        echo -e "            <command> [<args>]"
+        echo -e "  usage: $APP [--version] [--help]"
+        echo -e "              <command> [<args>]"
         echo
-        echo -e "available commands:"
-        echo -e "   list       lists all added projects"
-        echo -e "   init       add the project into the projector"
-        echo -e "   cd         open project"
+        echo -e "  available commands:"
+        echo -e "     list       lists all added projects"
+        echo -e "     init       add the project into the projector"
+        echo -e "     cd         open project"
         echo
-        echo -e "available options:"
-        echo -e "   --version     prints the version number"
-        echo -e "   --db_dir   specifies the directory to treat as database"
+        echo -e "  available options:"
+        echo -e "     --version     prints the version number"
+        echo -e "     --db_dir   specifies the directory to treat as database"
     else
         case $1 in
             cd)
-                echo -e "usage: $APP cd [project]"
-                echo
-                echo -e "   project      name of the project to oppen"
+                echo -e "  usage: $APP cd [project]"
+                echo -e "     project      name of the project to oppen"
             ;;
             list)
-                echo -e "usage: $APP list [<options>]"
+                echo -e "  usage: $APP list [<options>]"
+                echo -e "     -q           list only project names"
             ;;
             init)
-                echo -e "usage: $APP init [<options>]"
-                echo
-                echo -e "   -n, --name   name of the project, default: current dirname"
+                echo -e "  usage: $APP init [<options>]"
+                echo -e "     -n, --name   name of the project, default: current dirname"
             ;;
             *)
                 echo -e "unknown command $1"
@@ -38,6 +38,7 @@ print_usage() {
             ;;
         esac
     fi
+    echo
 }
 
 init_project() {
@@ -54,6 +55,24 @@ init_project() {
 
 
 list_projects() {
+
+    while [ $# -gt 0 ]
+    do
+        case $1 in
+            -q)
+                shift
+                ls $DB_DIR | xargs
+                exit
+            ;;
+            *)
+                echo "unknown parameters! $1"
+                print_usage list
+                exit 1
+            ;;
+        esac
+    done
+
+
     ls $DB_DIR | while read DIR
     do
         local path=$(cat "$DB_DIR/$DIR/pwd")
@@ -136,7 +155,7 @@ while [ $# -gt 0 ]; do
         list)
             shift
             init
-            list_projects
+            list_projects $@
             exit
         ;;
         init)
@@ -171,6 +190,7 @@ while [ $# -gt 0 ]; do
         help|--help|-h)
             shift
             print_usage $@
+            exit
         ;;
         --db_dir)
             shift
